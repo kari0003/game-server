@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es6",
+    "noImplicitAny": false,
+    "removeComments": false,
+    "sourceMap": true,
+    "rootDir": "src",
+    "declaration": false,
+    "emitDecoratorMetadata": false,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true,
+    "preserveConstEnums": true,
+    "strictNullChecks": true,
+    "moduleResolution": "node",
+    "baseUrl": "./src",
+    "paths": {
+      "@matchmaker/*": [
+        "./*"
+      ]
+    },
+    "outDir": "./build"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
