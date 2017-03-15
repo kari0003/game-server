@@ -11,7 +11,7 @@ export abstract class BaseQueueService extends BaseService {
   protected getTimeElapsed(currentTime: number) {
     return currentTime - this.lastUpdateTime;
   }
-  abstract addPlayer()
-  abstract removePlayer()
+  abstract addEntry()
+  abstract removeEntry()
   abstract updateConfig()
 }
