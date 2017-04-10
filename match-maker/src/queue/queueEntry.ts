@@ -1,10 +1,24 @@
+import * as moment from 'moment';
+
 import { BaseService } from '@matchmaker/service/baseService';
 import { Trait } from '@matchmaker/traits/trait';
 
-export abstract class QueueEntry {
+export abstract class Entry {
   count: number;
   traits: any; // summarized traits of the entry
   individualTraits: any[];
+
+}
+
+export abstract class QueueEntry {
+  enteredAt: number; // Timestamp
+  count: number;
+  traits: any; // summarized traits of the entry
+  individualTraits: any[];
+
+  constructor() {
+    this.enteredAt = moment().unix();
+  }
 
 }
 
