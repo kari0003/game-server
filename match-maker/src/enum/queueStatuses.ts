@@ -1,7 +1,7 @@
 export type TQueueStatus = 'inactive' | 'idle' | 'matchesFound';
 
 export const queueStatuses = {
-  INACTIVE: 'inactive',
-  IDLE: 'idle',
-  MATCHES_FOUND: 'matchesFound',
+  INACTIVE: 'inactive' as TQueueStatus,
+  IDLE: 'idle' as TQueueStatus,
+  MATCHES_FOUND: 'matchesFound' as TQueueStatus,
 }
