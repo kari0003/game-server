@@ -13,6 +13,11 @@ export abstract class QueueEntry {
     this.enteredAt = moment().unix();
   }
 
+  getTrait(trait: Trait) {
+    return this.traits[trait.key];
+    // TODO default value?
+  }
+
 }
 
 

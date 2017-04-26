@@ -52,7 +52,25 @@ class QueueRouterController extends BaseController {
 
   @put('/:queueId/players')
   async putPlayersById(req: express.Request, res: express.Response, next: express.NextFunction) {
+    const queueId = _.get<string>(req.params, 'queueId');
+    const players = _.get(req, 'body.players');
+    const queueService = req.getInstance(QueueService);
+    await queueService.putPlayers(queueId, players);
+  }
 
+  @del('/:queueId/players')
+  async removePlayersById(req: express.Request, res: express.Response, next: express.NextFunction) {
+    const queueId = _.get<string>(req.params, 'queueId');
+    const players = _.get(req, 'body.players');
+    const queueService = req.getInstance(QueueService);
+    await queueService.removePlayers(queueId, players);
+  }
+
+  @get('/:queueId/matches')
+  async getMatchesById(req: express.Request, res: express.Response, next: express.NextFunction) {
+    const queueId = _.get<string>(req.params, 'queueId');
+    const queueService = req.getInstance(QueueService);
+    await queueService.getMatches(queueId);
   }
 }
 

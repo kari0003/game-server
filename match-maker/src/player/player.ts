@@ -1,21 +1,21 @@
 import * as _ from 'lodash';
 import { QueueEntry } from '@matchmaker/queue/queueEntry';
 
-export class Player {
-  public id: string;
-  public traits: any;
+export interface IPlayer {
+  id: string;
+  traits: any;
 }
 
 export class Group {
-  public players: Player[];
+  public players: IPlayer[];
   public count: number;
 }
 
 export class PlayerEntry extends QueueEntry {
-  public player: Player;
+  public player: IPlayer;
   count = 1;
 
-  constructor(player: Player) {
+  constructor(player: IPlayer) {
     super();
     this.player = player;
     this.traits = player.traits;
@@ -24,9 +24,9 @@ export class PlayerEntry extends QueueEntry {
 }
 
 export class GroupEntry extends QueueEntry {
-  public players: Player[];
+  public players: IPlayer[];
 
-  constructor(members: Player[]) {
+  constructor(members: IPlayer[]) {
     super();
     this.players = members;
     this.count = members.length;

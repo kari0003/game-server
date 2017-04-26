@@ -1,5 +1,5 @@
 import * as _ from 'lodash';
-import { Player } from '@matchmaker/player/player';
+import { IPlayer } from '@matchmaker/player/player';
 
 export class Game {
   public id: string;
@@ -9,6 +9,6 @@ export class Game {
 
 export class Team {
   public id: string;
-  players: Player[];
+  players: IPlayer[];
 }
 

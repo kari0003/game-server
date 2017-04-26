@@ -7,6 +7,15 @@ import { QueueEntry } from '@matchmaker/queue/queueEntry';
 import { Game } from '@matchmaker/game/game';
 import { redisClient } from '@matchmaker/database';
 
+export interface IQueue {
+  key: string;
+  config: IQueueConfig;
+  updatedAt: number;
+  entries: QueueEntry[];
+  pendingMatches;
+  status: TQueueStatus;
+}
+
 export abstract class BaseQueue {
   public key: string;
   config: IQueueConfig;
