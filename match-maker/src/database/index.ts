@@ -79,7 +79,7 @@ export class RedisWrapper {
         return resolve(res);
       });
     }).then((value) => {
-      return value;
+      return value as string;
     }).catch((err) => {
       logger.error(err);
       throw new Error(err);

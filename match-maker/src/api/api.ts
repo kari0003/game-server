@@ -2,6 +2,8 @@ import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as _ from 'lodash';
 import * as path from 'path';
+import * as ebl from 'express-bunyan-logger';
+
 
 import { logger } from '@matchmaker/util/logger';
 import { contextableMiddleware } from '@matchmaker/api/middlewares/contextableMiddleware';
@@ -14,6 +16,13 @@ const app = express();
 export async function initExpress() {
   app.get('api/v1/status', (req, res) => {res.sendStatus(200)});
 
+//  app.use(require('express-bunyan-logger')({
+//    name: 'apilogger',
+//    streams: [{
+//      level: 'debug',
+//      stream: process.stdout
+//    }],
+//    }));
   app.use(responseHandlerMiddleware());
 
   app.use(bodyParser.json({ limit: '10mb' }));

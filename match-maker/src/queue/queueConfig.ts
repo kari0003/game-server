@@ -46,8 +46,9 @@ export interface IMatcherConfig {
 export interface IMatchConfig {
 
   // Either teamSize and teamCount, or teamConfigs must be set
-  teamSize: number;
+  teamSize: number; // TODO remove (duplicate in teamConfig)
   teamCount: number;
+  teamConfig: ITeamConfig;
 }
 
 export interface IAssymetricMatchConfig {
@@ -66,8 +67,8 @@ export const defaultConfig: IQueueConfig = {
   updateInterval: 1000,
   isGroupEnabled: false,
   isPlayerEnabled: true,
-  matchOnInsert: true,
-  matchOnQuery: false,
+  matchOnInsert: false,
+  matchOnQuery: true,
   matcherConfig: {
     matchConfig: {
       teamCount: 2,

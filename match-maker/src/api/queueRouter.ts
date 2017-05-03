@@ -56,6 +56,7 @@ class QueueRouterController extends BaseController {
     const players = _.get(req, 'body.players');
     const queueService = req.getInstance(QueueService);
     await queueService.putPlayers(queueId, players);
+    return res.noContent();
   }
 
   @del('/:queueId/players')
@@ -64,6 +65,7 @@ class QueueRouterController extends BaseController {
     const players = _.get(req, 'body.players');
     const queueService = req.getInstance(QueueService);
     await queueService.removePlayers(queueId, players);
+    return res.noContent();
   }
 
   @get('/:queueId/matches')
@@ -71,6 +73,25 @@ class QueueRouterController extends BaseController {
     const queueId = _.get<string>(req.params, 'queueId');
     const queueService = req.getInstance(QueueService);
     await queueService.getMatches(queueId);
+    return res.noContent();
+  }
+
+  @put('/:queueId/matches/start')
+  async putStartMatchesById(req: express.Request, res: express.Response, next: express.NextFunction) {
+    const queueId = _.get<string>(req.params, 'queueId');
+    const matchIds = _.get<string[]>(req, 'body.matches');
+    const queueService = req.getInstance(QueueService);
+    const matches = await queueService.startMatches(queueId, matchIds);
+    return res.finalize(matches);
+  }
+
+  @put('/:queueId/matches/cancel')
+  async putCancelMatchesById(req: express.Request, res: express.Response, next: express.NextFunction) {
+    const queueId = _.get<string>(req.params, 'queueId');
+    const matchIds = _.get<string[]>(req, 'body.matches');
+    const queueService = req.getInstance(QueueService);
+    const matches = await queueService.failMatches(queueId, matchIds);
+    return res.finalize(matches);
   }
 }
 

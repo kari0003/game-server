@@ -1,6 +1,8 @@
 import * as _ from 'lodash';
+import * as Boom from 'boom';
+
 import { TQueueStatus, queueStatuses } from '@matchmaker/enum/queueStatuses';
-import { QueueEntry } from '@matchmaker/queue/queueEntry';
+import { QueueEntry, queueEntryStatuses } from '@matchmaker/queue/queueEntry';
 import { BaseQueue } from '@matchmaker/queue/baseQueue';
 import { defaultConfig } from '@matchmaker/queue/queueConfig';
 import { Game } from '@matchmaker/game/game';
@@ -8,7 +10,7 @@ import { PlayerEntry, GroupEntry } from '@matchmaker/player/player';
 
 export class DefaultQueue extends BaseQueue {
   status: TQueueStatus;
-  pendingMatches: Game[];
+  pendingMatches: Game[] = [];
   entries: QueueEntry[] = [];
   constructor() {
     super(defaultConfig);
@@ -16,36 +18,38 @@ export class DefaultQueue extends BaseQueue {
   }
 
   async onMatchFound(match: Game) {
+    match.onDraft();
     this.pendingMatches.push(match);
-  }
-  async onMatchStarted(match: Game) {
-    _.pull(this.pendingMatches, match);
-
-    // Removing entries in which players participated in.
-    // CONSIDER a better way would be storing the queueEntries in matches.
-    _.forEach(match.teams, (team) => {
-      _.forEach(team.players, (player) => {
-        _.remove(this.entries, (entry) => {
-          // We need to cast the entries to either PlayerEntry or GroupEntry.
-          if (typeof entry === typeof PlayerEntry) {
-            if (_.isEqual((<PlayerEntry>entry).player, player)) {
-              return true;
-            }
-            return false;
-          }
-          if (typeof entry === typeof GroupEntry) {
-            if (_.indexOf((<GroupEntry>entry).players, player)> 0) {
-              return true;
-            }
-            return false;
-          }
-          return false;
-        });
-      });
+    _.forEach(this.entries, (entry) => {
+      if (_.includes(match.entryIds, entry.id)) {
+        entry.status = queueEntryStatuses.DRAFTED;
+      }
     });
   }
-  async onMatchFailed(match: Game) {
+  async onMatchStarted(matchId: string) {
+    const match = _.find(this.pendingMatches, match => match.id===matchId);
 
+    if (!match) {
+      throw Boom.notFound('match not found');
+    }
+    // Removing entries in which players participated in.
+    _.remove(this.entries, (entry) => _.includes(match.entryIds, entry.id));
+    _.remove(this.pendingMatches, match);
+  }
+  async onMatchFailed(matchId: string) {
+    const match = _.find(this.pendingMatches, match => match.id===matchId);
+
+    if (!match) {
+      throw Boom.notFound('match not found');
+    }
+
+    // Re-enabling entries in which players participated in.
+    _.forEach(this.entries, (entry) => {
+      if (_.includes(match.entryIds, entry.id)) {
+        entry.status = queueEntryStatuses.SEARCHING;
+      }
+    });
+    _.remove(this.pendingMatches, match);
   }
   async onPeriodUpdate() {
     // TODO Matching stuff

@@ -3,14 +3,27 @@ import * as moment from 'moment';
 import { BaseService } from '@matchmaker/service/baseService';
 import { Trait } from '@matchmaker/traits/trait';
 
+export type TQueueEntryStatus = 'search' | 'frozen' | 'drafted';
+export const queueEntryStatuses = {
+  SEARCHING: 'search' as TQueueEntryStatus,
+  FROZEN: 'frozen' as TQueueEntryStatus,
+  DRAFTED: 'drafted' as TQueueEntryStatus,
+}
+
 export abstract class QueueEntry {
+  id: string;
   enteredAt: number; // Timestamp
   count: number;
   traits: any; // summarized traits of the entry
   individualTraits: any[];
+  status: TQueueEntryStatus;
 
-  constructor() {
+  constructor(id?: string) {
+    if (id) {
+      this.id = id;
+    }
     this.enteredAt = moment().unix();
+    this.status = queueEntryStatuses.SEARCHING;
   }
 
   getTrait(trait: Trait) {

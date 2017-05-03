@@ -43,8 +43,8 @@ export abstract class BaseQueue {
   abstract async onAddEntry(e: QueueEntry)
   abstract async onRemoveEntry(e: QueueEntry) // CONSIDER: by id?
   abstract async onMatchFound(g: Game)
-  abstract async onMatchStarted(g: Game)
-  abstract async onMatchFailed(g: Game)
+  abstract async onMatchStarted(matchId: string)
+  abstract async onMatchFailed(matchId: string)
   abstract async onPeriodUpdate()
 
   updateConfig(newConf: IQueueConfig) {

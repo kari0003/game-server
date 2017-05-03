@@ -16,7 +16,7 @@ export class PlayerEntry extends QueueEntry {
   count = 1;
 
   constructor(player: IPlayer) {
-    super();
+    super(player.id);
     this.player = player;
     this.traits = player.traits;
     this.individualTraits = [this.traits];

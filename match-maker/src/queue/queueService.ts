@@ -1,6 +1,7 @@
 import * as _ from 'lodash';
 import * as Boom from 'boom';
 
+import { logger } from '@matchmaker/util/logger';
 import { IQueueConfig, IMatcherConfig, IMatchConfig } from '@matchmaker/queue/queueConfig';
 import { BaseQueue } from '@matchmaker/queue/baseQueue';
 import { BaseService } from '@matchmaker/service/baseService';
@@ -16,7 +17,9 @@ const queueStore = {};
 export class QueueService extends BaseService {
   async getQueueByKey(queueKey: string) {
     const queue = await redisClient.get(queueKey);
-    return queue;
+
+    return queueStore[queueKey]
+    //return queue;
   }
 
   async createQueue(queueConfig: IQueueConfig) {
@@ -37,12 +40,16 @@ export class QueueService extends BaseService {
     if (!queue) {
       throw new Boom.notFound('queue not found');
     }
-    const entries = _.map(players, (player: IPlayer) => {
+    const entries = await Promise.all(_.map(players, async (player: IPlayer) => {
       const playerEntry = new PlayerEntry(player);
+      if (!player.id) {
+        const unique = await redisClient.getUniqueKey();
+        player.id = `player${unique}`;
+      }
       queue.onAddEntry(playerEntry);
       return playerEntry;
       // TODO no duplicates
-    });
+    }));
     return queue;
   }
 
@@ -71,10 +78,45 @@ export class QueueService extends BaseService {
     return queue.pendingMatches;
   }
 
+  async startMatches(queueKey: string, matchIds: string[]) {
+    const queue: DefaultQueue = await queueStore[queueKey];
+    if (!queue) {
+      throw new Boom.notFound('queue not found');
+    }
+    let started = 0;
+    await Promise.all(_.forEach(matchIds, async (matchId) => {
+      try {
+        await queue.onMatchStarted(matchId);
+        started ++;
+      } catch (err) {
+        logger.error(err);
+      };
+    }));
+    return started;
+  }
+
+  async failMatches(queueKey: string, matchIds: string[]) {
+    const queue: DefaultQueue = await queueStore[queueKey];
+    if (!queue) {
+      throw new Boom.notFound('queue not found');
+    }
+    let failed = 0;
+    await Promise.all(_.forEach(matchIds, async (matchId) => {
+      try {
+        await queue.onMatchFailed(matchId);
+        failed ++;
+      } catch (err) {
+        logger.error(err);
+      };
+    }));
+    return failed;
+  }
+
   async findMatch(queue: DefaultQueue) {
     const matcher = queue.config.matcherConfig;
     const matches: Game[]= [];
-    const currentGame = new Game();
+    const newId = <string> await redisClient.getUniqueKey();
+    const currentGame = new Game(newId);
     currentGame.teams = _.times((<IMatchConfig> matcher.matchConfig).teamCount, (index) => {
       const team = new Team();
       team.id = index.toString();
@@ -82,25 +124,16 @@ export class QueueService extends BaseService {
     });
     let teamId = 0;
     _.forEach(queue.entries, (player1) => {
-      if (currentGame.teams[teamId].players.length === 0 ) {
-        currentGame.teams[teamId].players.push((<PlayerEntry> player1).player);
-        if (currentGame.teams[teamId].players.length === (<IMatchConfig> matcher.matchConfig).teamSize) {
-          teamId ++
+      currentGame.teams[teamId].entries.push(player1);
+      if (currentGame.teams[teamId].entries.length >= (<IMatchConfig> matcher.matchConfig).teamSize) {
+        teamId ++;
+        if (teamId >= (<IMatchConfig> matcher.matchConfig).teamCount) {
+          matches.push(currentGame);
+          return false;
         }
       }
-      _.forEach(queue.entries, (player2) => {
-        if (player1 != player2) {
-          const value = this.comparePlayers(matcher, player1, player2);
-          if (value < 1) {
-            currentGame.teams[teamId].players.push((<PlayerEntry> player2).player);
-            if (currentGame.teams[teamId].players.length === (<IMatchConfig> matcher.matchConfig).teamSize) {
-              teamId ++
-            }
-          }
-        }
-      });
     });
-    queue.pendingMatches.concat(matches);
+    _.forEach(matches, (match) => queue.onMatchFound(match));
     return matches;
   }
 
