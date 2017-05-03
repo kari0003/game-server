@@ -41,11 +41,11 @@ export class QueueService extends BaseService {
       throw new Boom.notFound('queue not found');
     }
     const entries = await Promise.all(_.map(players, async (player: IPlayer) => {
-      const playerEntry = new PlayerEntry(player);
       if (!player.id) {
         const unique = await redisClient.getUniqueKey();
         player.id = `player${unique}`;
       }
+      const playerEntry = new PlayerEntry(player);
       queue.onAddEntry(playerEntry);
       return playerEntry;
       // TODO no duplicates

@@ -49,8 +49,9 @@ export async function testStartMatch() {
   const matchIds = _.map(matches, (match) => match.id);
   await queueService.startMatches(queueId, matchIds);
   const queue = await queueService.getQueueByKey(queueId);
-  assert(queue.entries.length === 2, 'not all players left the queue');
-  assert(queue.pendingMatches.length === 0, 'started match not removed');
+  console.log(queue.entries[0]);
+  assert(queue.entries.length === 2, 'not all players left the queue: ' + queue.entries.length);
+  assert(queue.pendingMatches.length === 0, 'started match not removed ' + queue.pendingMatches.length);
 }
 
 export async function testFailMatch() {
@@ -70,11 +71,10 @@ export async function testFailMatch() {
 function generatePlayers(count: number): IPlayer[] {
   return _.times(count, (i) => {
     return {
-      id: `player${i}`,
       traits: {
         elo: 1000,
         black: false,
       }
-    }
+    } as IPlayer;
   });
 }
