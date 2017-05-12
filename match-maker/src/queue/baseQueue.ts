@@ -1,10 +1,10 @@
 import * as moment from 'moment';
 
-import { TQueueStatus } from '@matchmaker/enum/queueStatuses';
+import { TQueueStatus, queueStatuses } from '@matchmaker/enum/queueStatuses';
 import { BaseService } from '@matchmaker/service/baseService';
 import { IQueueConfig } from '@matchmaker/queue/queueConfig';
 import { QueueEntry } from '@matchmaker/queue/queueEntry';
-import { Game } from '@matchmaker/game/game';
+import { IGame, Game } from '@matchmaker/game/game';
 import { redisClient } from '@matchmaker/database';
 
 export interface IQueue {
@@ -12,15 +12,18 @@ export interface IQueue {
   config: IQueueConfig;
   updatedAt: number;
   entries: QueueEntry[];
-  pendingMatches;
+  pendingMatches: IGame[];
   status: TQueueStatus;
 }
 
-export abstract class BaseQueue {
+export abstract class BaseQueue implements IQueue {
   public key: string;
   config: IQueueConfig;
+  entries: QueueEntry[];
+  pendingMatches: IGame[];
+  status: TQueueStatus = queueStatuses.IDLE;
 
-  protected updatedAt: number;
+  updatedAt: number;
   protected getTimeElapsed(currentTime: number) {
     return currentTime - this.updatedAt;
   }

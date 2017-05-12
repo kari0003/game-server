@@ -3,7 +3,16 @@ import * as moment from 'moment';
 import { QueueEntry } from '@matchmaker/queue/queueEntry';
 import { redisClient } from '@matchmaker/database';
 
-export class Game {
+export interface IGame {
+  id: string;
+  createdAt: number;
+  entryIds: string[];
+  teams: Team[];
+  individualTraits: object[];
+}
+
+
+export class Game implements IGame{
   public id: string;
   createdAt: number;
   entryIds: string[] = [];
@@ -28,5 +37,16 @@ export class Game {
 export class Team {
   public id: string;
   entries: QueueEntry[] = [];
+}
+
+export async function createGame (teamCount: number) {
+    const newId = <string> await redisClient.getUniqueKey();
+    const game = new Game(newId);
+    game.teams = _.times(teamCount, (index) => {
+      const team = new Team();
+      team.id = index.toString();
+      return team;
+    });
+    return game;
 }
 

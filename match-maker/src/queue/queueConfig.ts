@@ -19,7 +19,7 @@ export interface IQueueConfig {
 }
 
 export interface IMatcherConfig {
-  matchConfig: IMatchConfig | IAssymetricMatchConfig;
+  matchConfig: IMatchConfig; // | IAssymetricMatchConfig;
 
   isDistanceMatcher: boolean; // matcher uses distance in its algorithm
   distanceTraits?: [{
