@@ -48,7 +48,7 @@ export interface IMatchConfig {
   // Either teamSize and teamCount, or teamConfigs must be set
   teamSize: number; // TODO remove (duplicate in teamConfig)
   teamCount: number;
-  teamConfig: ITeamConfig;
+  teamConfig?: ITeamConfig;
 }
 
 export interface IAssymetricMatchConfig {

@@ -9,6 +9,8 @@ import { redisClient } from '@matchmaker/database';
 import { Game, Team } from '@matchmaker/game/game';
 import { Trait } from '@matchmaker/traits/trait';
 import { DefaultQueue } from '@matchmaker/queue/queue';
+import { QueueDao } from '@matchmaker/queue/queueDao';
+
 import { QueueEntry } from '@matchmaker/queue/queueEntry'
 import { IPlayer, PlayerEntry } from '@matchmaker/player/player';
 
@@ -16,27 +18,32 @@ const queueStore = {};
 
 export class QueueService extends BaseService {
   async getQueueByKey(queueKey: string) {
-    const queue = await redisClient.get(queueKey);
+    //const queue = await redisClient.get(queueKey);
 
-    return queueStore[queueKey]
+    //return queueStore[queueKey]
     //return queue;
+
+    const queueDao = this.getInstance(QueueDao);
+    return queueDao.getQueueByKey(queueKey);
   }
 
   async createQueue(queueConfig: IQueueConfig) {
-    const queue = new DefaultQueue();
-    await queue.assignKey();
-    // TODO differentiate queueTypes
-    await redisClient.set(queue.key, queue);
-    queueStore[queue.key] = queue;
-    return queue;
+    const queueDao = this.getInstance(QueueDao);
+    return queueDao.createQueue(queueConfig);
+  }
+
+  async updateQueue(queue: BaseQueue) {
+    const queueDao = this.getInstance(QueueDao);
+    return queueDao.updateById(queue.id, queue);
   }
 
   async removeQueueByKey(queueKey: string) {
-    return redisClient.del(queueKey);
+    const queueDao = this.getInstance(QueueDao);
+    return queueDao.removeQueueByKey(queueKey);
   }
 
   async putPlayers(queueKey: string, players) {
-    const queue: BaseQueue = await queueStore[queueKey];
+    const queue = await this.getQueueByKey(queueKey);
     if (!queue) {
       throw new Boom.notFound('queue not found');
     }
@@ -50,11 +57,12 @@ export class QueueService extends BaseService {
       return playerEntry;
       // TODO no duplicates
     }));
+    await this.updateQueue(queue);
     return queue;
   }
 
   async removePlayers(queueKey: string, players) {
-    const queue: DefaultQueue = await queueStore[queueKey];
+    const queue = await this.getQueueByKey(queueKey);
     if (!queue) {
       throw new Boom.notFound('queue not found');
     }
@@ -64,22 +72,25 @@ export class QueueService extends BaseService {
         // TODO invalidate matches.
       });
     });
+    await this.updateQueue(queue);
     return queue;
   }
 
   async getMatches(queueKey: string) {
-    const queue: DefaultQueue = await queueStore[queueKey];
+    //const queue: DefaultQueue = queueStore[queueKey];
+    const queue = await this.getQueueByKey(queueKey);
     if (!queue) {
       throw new Boom.notFound('queue not found');
     }
     if (queue.config.matchOnQuery) {
       await this.findMatch(queue);
     }
+    await this.updateQueue(queue);
     return queue.pendingMatches;
   }
 
   async startMatches(queueKey: string, matchIds: string[]) {
-    const queue: DefaultQueue = await queueStore[queueKey];
+    const queue = await this.getQueueByKey(queueKey);
     if (!queue) {
       throw new Boom.notFound('queue not found');
     }
@@ -92,11 +103,12 @@ export class QueueService extends BaseService {
         logger.error(err);
       };
     }));
+    await this.updateQueue(queue);
     return started;
   }
 
   async failMatches(queueKey: string, matchIds: string[]) {
-    const queue: DefaultQueue = await queueStore[queueKey];
+    const queue = await this.getQueueByKey(queueKey);
     if (!queue) {
       throw new Boom.notFound('queue not found');
     }
@@ -109,6 +121,7 @@ export class QueueService extends BaseService {
         logger.error(err);
       };
     }));
+    await this.updateQueue(queue);
     return failed;
   }
 
@@ -124,12 +137,14 @@ export class QueueService extends BaseService {
     });
     let teamId = 0;
     _.forEach(queue.entries, (player1) => {
-      currentGame.teams[teamId].entries.push(player1);
-      if (currentGame.teams[teamId].entries.length >= (<IMatchConfig> matcher.matchConfig).teamSize) {
-        teamId ++;
-        if (teamId >= (<IMatchConfig> matcher.matchConfig).teamCount) {
-          matches.push(currentGame);
-          return false;
+      if (player1.status !== 'drafted') {
+        currentGame.teams[teamId].entries.push(player1);
+        if (currentGame.teams[teamId].entries.length >= (<IMatchConfig> matcher.matchConfig).teamSize) {
+          teamId ++;
+          if (teamId >= (<IMatchConfig> matcher.matchConfig).teamCount) {
+            matches.push(currentGame);
+            return false;
+          }
         }
       }
     });

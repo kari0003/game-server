@@ -8,7 +8,7 @@ import { IGame, Game } from '@matchmaker/game/game';
 import { redisClient } from '@matchmaker/database';
 
 export interface IQueue {
-  key: string;
+  id: string;
   config: IQueueConfig;
   updatedAt: number;
   entries: QueueEntry[];
@@ -17,7 +17,7 @@ export interface IQueue {
 }
 
 export abstract class BaseQueue implements IQueue {
-  public key: string;
+  public id: string;
   config: IQueueConfig;
   entries: QueueEntry[];
   pendingMatches: IGame[];
@@ -29,12 +29,12 @@ export abstract class BaseQueue implements IQueue {
   }
 
   async assignKey() {
-    const key = await redisClient.getUniqueKey() as string;
-    if (!key) {
-      throw new Error('key could not be generated');
+    const id = await redisClient.getUniqueKey() as string;
+    if (!id) {
+      throw new Error('id could not be generated');
     }
-    this.key = key;
-    return key;
+    this.id = id;
+    return id;
   }
 
   constructor(config) {

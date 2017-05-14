@@ -31,11 +31,9 @@ class QueueRouterController extends BaseController {
 
   @get('/:playerId')
   async getById(req: express.Request, res: express.Response, next: express.NextFunction) {
-    console.log('shiat happens');
     const queueId = _.get<string>(req.params, 'queueId');
     const queueService = req.getInstance(QueueService);
     const queue = await queueService.getQueueByKey(queueId);
-    console.log(queue)
     return res.finalize(queue);
   }
 

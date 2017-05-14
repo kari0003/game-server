@@ -36,13 +36,13 @@ export class RedisWrapper {
     })
   }
 
-  async del(key: string) {
+  async del(keys: string[]) {
     return new Promise((resolve, reject) => {
-      _redisClient.del(key, (err, res) => {
+      _redisClient.del(keys, (err, res) => {
         if (err) {
           return reject(err);
         }
-        return resolve(res);
+        return resolve(res as number);
       });
     })
   }
@@ -70,7 +70,7 @@ export class RedisWrapper {
     })
   }
 
-  getUniqueKey() {
+  getUniqueKey(): Promise<string> {
     return new Promise( (resolve, reject) => {
       _redisClient.incr('uniqueCounter', (err, res) => {
         if (err) {
