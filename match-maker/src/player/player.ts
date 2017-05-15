@@ -3,10 +3,18 @@ import { QueueEntry } from '@matchmaker/queue/queueEntry';
 
 export interface IPlayer {
   id: string;
-  traits: any;
+  name?: string;
+  traits: object;
 }
 
-export class Group {
+export interface IGroup {
+  id: string;
+  players: IPlayer[];
+  count: number;
+}
+
+export class Group implements IGroup {
+  public id: string;
   public players: IPlayer[];
   public count: number;
 }
