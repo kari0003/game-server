@@ -10,7 +10,16 @@ export const queueEntryStatuses = {
   DRAFTED: 'drafted' as TQueueEntryStatus,
 }
 
-export abstract class QueueEntry {
+export interface IQueueEntry {
+  id: string;
+  enteredAt: number; // Timestamp
+  count: number;
+  traits: object; // summarized traits of the entry
+  individualTraits: object[];
+  status: TQueueEntryStatus;
+}
+
+export abstract class QueueEntry implements IQueueEntry {
   id: string;
   enteredAt: number; // Timestamp
   count: number;

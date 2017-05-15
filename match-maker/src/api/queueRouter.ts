@@ -6,14 +6,14 @@ import { BaseController } from '@matchmaker/api/baseController';
 
 import { QueueService } from '@matchmaker/queue/queueService';
 import { IQueueConfig } from '@matchmaker/queue/queueConfig';
-//import { router as washRouter } from './wash/wash';
+//import { router as queueByIdRouter } from './byId/byId';
 
 @controller()
 class QueueRouterController extends BaseController {
   constructor() {
     super();
 
-//    this.router.use('/wash', washRouter);
+//    this.router.use('/queueId', queueByIdRouter);
   }
 
   @get()
