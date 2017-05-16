@@ -2,7 +2,9 @@ import * as _ from 'lodash';
 
 import { RedisDao } from '@matchmaker/dal/redisDao';
 import { DefaultQueue } from '@matchmaker/queue/queue';
-import { IQueueConfig } from '@matchmaker/queue/queueConfig';
+import { QueueEntry } from '@matchmaker/queue/queueEntry';
+import { PlayerEntry, GroupEntry } from '@matchmaker/player/player';
+import { IQueueConfig, defaultConfig } from '@matchmaker/queue/queueConfig';
 import { IQueue } from '@matchmaker/queue/baseQueue';
 
 export class QueueDao extends RedisDao<IQueue> {
@@ -10,6 +12,18 @@ export class QueueDao extends RedisDao<IQueue> {
     // TODO differentiate queueTypes
     const queue = new DefaultQueue();
     Object.assign(queue, queueData);
+    queue.entries = _.map(queue.entries, entryData => {
+      if (_.get(entryData, 'player', false)) {
+        const entry = new PlayerEntry(entryData['player']);
+        Object.assign(entry, entryData);
+        return entry;
+      }
+      // if (_.get(entryData, 'players', false)) {
+      const entry = new GroupEntry(entryData['players']);
+      Object.assign(entry, entryData);
+      return entry;
+      // }
+    });
     return queue;
   }
 
@@ -22,6 +36,9 @@ export class QueueDao extends RedisDao<IQueue> {
   }
 
   async createQueue(queueConfig: IQueueConfig) {
+    if (!queueConfig) {
+      queueConfig = defaultConfig;
+    }
     const queue = new DefaultQueue();
     const created = await this.create(queue);
     return this.dataToObject(created);

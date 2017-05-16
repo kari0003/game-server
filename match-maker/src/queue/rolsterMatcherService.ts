@@ -5,22 +5,43 @@ import { logger } from '@matchmaker/util/logger';
 import { IQueueConfig } from '@matchmaker/queue/queueConfig';
 import { QueueEntry,  queueEntryStatuses } from '@matchmaker/queue/queueEntry';
 import { BaseQueue } from '@matchmaker/queue/baseQueue';
-import { BaseService } from '@matchmaker/service/baseService';
+import { BaseMatcherService } from '@matchmaker/queue/baseMatcherService';
 import { Trait } from '@matchmaker/traits/trait';
 import { Game, IGame, createGame } from '@matchmaker/game/game'
 
-export class RolsterMatcherService extends BaseService {
+export class RolsterMatcherService extends BaseMatcherService {
   config: IQueueConfig;
 
-  findMatch(queue: BaseQueue) {
+  async findMatch(queue: BaseQueue) {
+    const results: Game[] = [];
     this.config = queue.config;
-    const results: IGame[] = [];
-    const targets = this.gatherTargets(queue.entries);
+    const entries = _.cloneDeep(queue.entries);
+    const targets = this.gatherTargets(entries);
+    while (targets.length > 0) {
+      const selected: Game | null = await this.populateMatch(targets.pop()!, entries);
+      if (selected) {
+
+        results.push(selected);
+
+        const entryIds: string[] = [];
+        _.forEach(selected.teams, (team) => {
+          _.forEach(team.entries, (entry) => {
+            entryIds.push(entry.id);
+          });
+        });
+        _.remove(entries, (entry) => _.includes(entryIds, entry.id));
+        _.remove(targets, (entry) => _.includes(entryIds, entry.id));
+      }
+    }
+    return results;
   }
 
   gatherTargets(entries: QueueEntry[]) {
     const targets: QueueEntry[] = [];
-    const count = Math.min(this.config.matcherConfig.maxTargets, entries.length);
+    let count = entries.length;
+    if (this.config.matcherConfig.maxTargets >= 0) {
+      count = Math.min(this.config.matcherConfig.maxTargets, entries.length);
+    }
     _.times(count, (i) => {
       if (entries[i].status === queueEntryStatuses.SEARCHING) {
         targets.push(entries[i]);
@@ -42,7 +63,7 @@ export class RolsterMatcherService extends BaseService {
         finished = true;
       }
       _.remove(potentials, (e) => e.id === nextEntry!.id);
-      game.teams[nextTeam].push(nextEntry);
+      game.teams[nextTeam].entries.push(nextEntry);
 
       if (this.validateGame(game)) {
         finished = true;
@@ -51,49 +72,23 @@ export class RolsterMatcherService extends BaseService {
         finished = true;
         success = false;
       }
-
     }
+    if (success) {
+      return game;
+    }
+    return null;
   }
 
   getPotentials(target: QueueEntry, entries: QueueEntry[]) {
     const potentials: QueueEntry[] = [];
     _.forEach(entries, (e) => {
       if (target.id !== e.id && e.status !== queueEntryStatuses.DRAFTED) {
-        if (this.compareEntries(target, e) < (this.config.matcherConfig.maxDistancePlayers || 1)) {
+        if (this.checkCompability(this.config.matcherConfig, target, e)) {
           potentials.push(e);
         }
       }
     });
     return potentials;
-  }
-
-  compareEntries(entry1: QueueEntry, entry2: QueueEntry) {
-    /*if (this.config.matcherConfig.isCompabilityMatcher) {
-      let compatible = true;
-      // TODO discord and synergy for teams only
-      _.forEach(this.config.matcherConfig.compabilityTraits!.synergy, (trait: Trait) => {
-        if (entry1.getTrait(trait) !== entry2.getTrait(trait)) {
-          compatible = false;
-        }
-      });
-      _.forEach(this.config.matcherConfig.compabilityTraits!.discord, (trait: Trait) => {
-        if (entry1.getTrait(trait) === entry2.getTrait(trait)) {
-          compatible = false;
-        }
-      });
-      if (!compatible) {
-        return 1;
-      }
-    }*/
-    if (this.config.matcherConfig.isDistanceMatcher) {
-      const distances = _.map(this.config.matcherConfig.distanceTraits!, (trait: Trait) => {
-        const dist = Math.abs(entry1.getTrait(trait) - entry2.getTrait(trait));
-        const normalized = dist / (this.config.matcherConfig.maxDistancePlayers || 1);
-        return normalized;
-      });
-      return _.sum(distances);
-    }
-    return 0;
   }
 
   getNextTeam(game: Game) {
@@ -124,11 +119,15 @@ export class RolsterMatcherService extends BaseService {
     if(game.teams.length != this.config.matcherConfig.matchConfig.teamCount) {
       return false;
     }
-    _.forEach(game.teams, team => {
+    const teamLengths = _.map(game.teams, team => {
       if (team.entries.length != this.config.matcherConfig.matchConfig.teamSize) {
         return false;
       }
+      return true;
     });
+    if (_.findIndex(teamLengths, b  => b === false) >= 0) {
+      return false;
+    }
     return true;
   }
 }

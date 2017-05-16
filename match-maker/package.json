@@ -22,6 +22,7 @@
     "@types/lodash": "^4.14.55",
     "@types/moment": "^2.13.0",
     "@types/redis": "^0.12.36",
+    "sinon": "^2.2.0",
     "tslint": "^4.3.1",
     "tslint-eslint-rules": "^3.2.3",
     "typescript": "^2.1.5"

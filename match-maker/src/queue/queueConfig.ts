@@ -1,5 +1,13 @@
 import { Trait } from '@matchmaker/traits/trait';
 
+type TTraitCompabilityLevel = 'players' | 'teams' | 'game';
+
+export const traitCompabilityLevels = {
+  PLAYERS: 'players' as TTraitCompabilityLevel, // Checks for matching players
+  TEAMS: 'teams' as TTraitCompabilityLevel, // Checks for players individually, but only in the team
+  GAME: 'game' as TTraitCompabilityLevel, // Checks for players individually in the whole game
+}
+
 export interface IQueueConfig {
   queueSize: number; // maximum amount of entries allowed in queue (-1 unlimited)
 
@@ -33,6 +41,11 @@ export interface IMatcherConfig {
   compabilityTraits?: {
     synergy: Trait[]; // compability traits that should be the same by game
     discord: Trait[]; // compability traits that should be different by teams
+    distance: [{
+      trait: Trait;
+      maxDistance: number;
+    }];
+    intervall: Trait[];
   };
 
   isWaitDurationMatcher: boolean; // matcher can match long waiting players to an unfair game
@@ -86,7 +99,19 @@ export const defaultConfig: IQueueConfig = {
     maxDistancePlayers: 50,
     maxDistanceTeams: 50,
 
-    isCompabilityMatcher:false,
+    isCompabilityMatcher: true,
+    compabilityTraits: {
+      synergy: [] as Trait[],
+      discord: [] as Trait[],
+      intervall: [] as Trait[],
+      distance: [{
+        trait: {
+          key: 'elo',
+          type: 'number',
+        },
+        maxDistance: 50,
+      }]
+    },
     isWaitDurationMatcher: false,
 
     maxPotentials: -1,

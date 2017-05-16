@@ -1,7 +1,9 @@
 import { logger } from '@matchmaker/util/logger';
 import { testPlayerAdd, testPlayerRemove, testFindMatch, testStartMatch, testFailMatch } from './queuePlayerManagement';
+import { testQueueCreate } from './queueUnit-test';
 
 Promise.all([
+  testGenerator(testQueueCreate),
   testGenerator(testPlayerAdd),
   testGenerator(testPlayerRemove),
   testGenerator(testFindMatch),

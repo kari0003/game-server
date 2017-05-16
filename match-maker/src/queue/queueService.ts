@@ -10,6 +10,7 @@ import { Game, Team } from '@matchmaker/game/game';
 import { Trait } from '@matchmaker/traits/trait';
 import { DefaultQueue } from '@matchmaker/queue/queue';
 import { QueueDao } from '@matchmaker/queue/queueDao';
+import { RolsterMatcherService } from '@matchmaker/queue/rolsterMatcherService';
 
 import { QueueEntry } from '@matchmaker/queue/queueEntry'
 import { IPlayer, PlayerEntry } from '@matchmaker/player/player';
@@ -83,7 +84,12 @@ export class QueueService extends BaseService {
       throw new Boom.notFound('queue not found');
     }
     if (queue.config.matchOnQuery) {
-      await this.findMatch(queue);
+      // await this.findMatch(queue);
+      const rolsterMatcherService = this.getInstance(RolsterMatcherService);
+      const matches = await rolsterMatcherService.findMatch(queue);
+      _.forEach(matches, (match) => {
+        queue.onMatchFound(match);
+      });
     }
     await this.updateQueue(queue);
     return queue.pendingMatches;
@@ -150,33 +156,5 @@ export class QueueService extends BaseService {
     });
     _.forEach(matches, (match) => queue.onMatchFound(match));
     return matches;
-  }
-
-  comparePlayers(matcher: IMatcherConfig, player1: QueueEntry, player2: QueueEntry) {
-    if (matcher.isCompabilityMatcher) {
-      let compatible = true;
-      // TODO discord and synergy for teams only
-      _.forEach(matcher.compabilityTraits!.synergy, (trait: Trait) => {
-        if (player1.getTrait(trait) !== player2.getTrait(trait)) {
-          compatible = false;
-        }
-      });
-      _.forEach(matcher.compabilityTraits!.discord, (trait: Trait) => {
-        if (player1.getTrait(trait) === player2.getTrait(trait)) {
-          compatible = false;
-        }
-      });
-      if (!compatible) {
-        return 1;
-      }
-    }
-    if (matcher.isDistanceMatcher) {
-      _.forEach(matcher.distanceTraits!, (trait: Trait) => {
-        const dist = Math.abs(player1.getTrait(trait) - player2.getTrait(trait));
-        const normalized = dist / (matcher.maxDistancePlayers || dist);
-        return normalized;
-      });
-    }
-    return 0;
   }
 }

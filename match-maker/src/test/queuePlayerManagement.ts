@@ -70,6 +70,7 @@ export async function testFailMatch() {
 function generatePlayers(count: number): IPlayer[] {
   return _.times(count, (i) => {
     return {
+      id: `player${i}`,
       traits: {
         elo: 1000,
         black: false,
